@@ -1,0 +1,421 @@
+﻿import sqlite3
+from pathlib import Path
+
+import pandas as pd
+import plotly.express as px
+import streamlit as st
+
+DB_PATH = Path(__file__).resolve().parent / "apishield.db"
+
+st.set_page_config(
+    page_title="APIShield Security Console",
+    page_icon="🛡️",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background: #120d09;
+        color: #f4e8d7;
+    }
+
+[data-testid="stSidebar"] {
+        background: #1b110b;
+        border-right: 1px solid #50351e;
+    }
+
+[data-testid="stSidebar"] > div:first-child {
+        padding: 1.5rem 1rem;
+    }
+
+.brand {
+        padding: 10px 4px 28px 4px;
+        border-bottom: 1px solid #50351e;
+        margin-bottom: 25px;
+    }
+
+.brand-title {
+        color: #f7ead8;
+        font-size: 25px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+    }
+
+.brand-subtitle {
+        color: #df971e;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 2px;
+        margin-top: 5px;
+    }
+
+.nav-section {
+        color: #a98967;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        margin: 22px 4px 10px 4px;
+        text-transform: uppercase;
+    }
+
+.nav-item {
+        color: #d9c2a5;
+        padding: 11px 12px;
+        border-radius: 8px;
+        margin: 4px 0;
+        font-size: 14px;
+    }
+
+.nav-active {
+        background: #4b2914;
+        color: #ffd487;
+        border-left: 3px solid #e3a116;
+        font-weight: 700;
+    }
+
+.side-footer {
+        color: #977b5e;
+        font-size: 11px;
+        line-height: 1.7;
+        border-top: 1px solid #50351e;
+        padding-top: 18px;
+        margin-top: 80px;
+    }
+
+.topbar {
+        background: #24170f;
+        border: 1px solid #50351e;
+        border-radius: 14px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+    }
+
+.topbar-title {
+        color: #f7ead8;
+        font-size: 27px;
+        font-weight: 800;
+    }
+
+.topbar-subtitle {
+        color: #b99875;
+        font-size: 13px;
+        margin-top: 5px;
+    }
+
+.status {
+        display: inline-block;
+        background: #163421;
+        border: 1px solid #27663b;
+        border-radius: 20px;
+        color: #6be091;
+        font-size: 12px;
+        font-weight: 700;
+        margin-top: 16px;
+        padding: 6px 12px;
+    }
+
+.metric-card {
+        background: #24170f;
+        border: 1px solid #50351e;
+        border-radius: 14px;
+        min-height: 145px;
+        padding: 20px;
+    }
+
+.metric-label {
+        color: #bb9b76;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+    }
+
+.metric-value {
+        color: #f7ead8;
+        font-size: 35px;
+        font-weight: 800;
+        margin-top: 14px;
+    }
+
+.metric-note {
+        color: #df971e;
+        font-size: 12px;
+        margin-top: 8px;
+    }
+
+.section-title {
+        color: #f4e8d7;
+        font-size: 20px;
+        font-weight: 800;
+        margin: 30px 0 14px 0;
+    }
+
+.panel {
+        background: #24170f;
+        border: 1px solid #50351e;
+        border-radius: 14px;
+        padding: 16px;
+    }
+
+.panel-title {
+        color: #f4e8d7;
+        font-size: 16px;
+        font-weight: 800;
+    }
+
+.panel-subtitle {
+        color: #bb9b76;
+        font-size: 12px;
+        margin: 5px 0 12px 0;
+    }
+
+.warning {
+        background: #2d1d0e;
+        border: 1px solid #a87308;
+        border-left: 5px solid #f1a400;
+        border-radius: 12px;
+        color: #ead7bd;
+        font-size: 13px;
+        margin: 20px 0;
+        padding: 13px 16px;
+    }
+
+[data-testid="stDataFrame"] {
+        border: 1px solid #50351e;
+        border-radius: 10px;
+    }
+
+.stCaption {
+        color: #a98967 !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+with st.sidebar:
+    st.markdown(
+        """
+        <div class="brand">
+            <div class="brand-title">🛡️ APIShield</div>
+            <div class="brand-subtitle">ENTERPRISE SECURITY</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+st.markdown('<div class="nav-section">Navigation</div>', unsafe_allow_html=True)
+    st.markdown('<div class="nav-item nav-active">▦ &nbsp; Security Overview</div>', unsafe_allow_html=True)
+    st.markdown('<div class="nav-item">◈ &nbsp; Threats</div>', unsafe_allow_html=True)
+    st.markdown('<div class="nav-item">☷ &nbsp; Request Logs</div>', unsafe_allow_html=True)
+
+st.markdown('<div class="nav-section">Configuration</div>', unsafe_allow_html=True)
+    st.markdown('<div class="nav-item">⚙ &nbsp; Policies</div>', unsafe_allow_html=True)
+    st.markdown('<div class="nav-item">♙ &nbsp; Settings</div>', unsafe_allow_html=True)
+
+st.markdown(
+        """
+        <div class="side-footer">
+            <b>Dharaneesh K</b><br>
+            APIShield v1.0<br>
+            Security Console<br>
+            All systems monitored
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+connection = sqlite3.connect(DB_PATH)
+
+logs = pd.read_sql_query(
+    """
+    SELECT
+        id,
+        timestamp,
+        endpoint,
+        method,
+        client_ip,
+        threat_type,
+        risk_score,
+        action
+    FROM request_logs
+    ORDER BY id DESC
+    """,
+    connection,
+)
+
+connection.close()
+
+if logs.empty:
+    st.warning("No request logs found in the database.")
+    st.stop()
+
+logs["risk_score"] = pd.to_numeric(
+    logs["risk_score"],
+    errors="coerce",
+).fillna(0)
+
+logs["action"] = logs["action"].fillna("UNKNOWN").astype(str)
+logs["threat_type"] = logs["threat_type"].fillna("UNKNOWN").astype(str)
+
+total_requests = len(logs)
+blocked_count = int((logs["action"] == "BLOCK").sum())
+alert_count = int((logs["action"] == "ALERT").sum())
+average_risk = round(float(logs["risk_score"].mean()), 1)
+
+st.markdown(
+    """
+    <div class="topbar">
+        <div class="topbar-title">Security Overview</div>
+        <div class="topbar-subtitle">
+            Real-time API threat detection and automated response monitoring
+        </div>
+        <div class="status">● All systems operational</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown('<div class="section-title">Live Metrics</div>', unsafe_allow_html=True)
+
+metric_1, metric_2, metric_3, metric_4 = st.columns(4)
+
+with metric_1:
+    st.markdown(
+        f"""
+        <div class="metric-card">
+            <div class="metric-label">Total Requests</div>
+            <div class="metric-value">{total_requests}</div>
+            <div class="metric-note">Live database records</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with metric_2:
+    st.markdown(
+        f"""
+        <div class="metric-card">
+            <div class="metric-label">Blocked</div>
+            <div class="metric-value">{blocked_count}</div>
+            <div class="metric-note">Threats prevented</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with metric_3:
+    st.markdown(
+        f"""
+        <div class="metric-card">
+            <div class="metric-label">Alerts</div>
+            <div class="metric-value">{alert_count}</div>
+            <div class="metric-note">Requires attention</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with metric_4:
+    st.markdown(
+        f"""
+        <div class="metric-card">
+            <div class="metric-label">Average Risk</div>
+            <div class="metric-value">{average_risk}</div>
+            <div class="metric-note">Risk threshold: 50</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+st.markdown('<div class="section-title">Distribution Breakdown</div>', unsafe_allow_html=True)
+
+threat_counts = (
+    logs["threat_type"]
+    .value_counts()
+    .rename_axis("Threat")
+    .reset_index(name="Count")
+)
+
+action_counts = (
+    logs["action"]
+    .value_counts()
+    .rename_axis("Action")
+    .reset_index(name="Count")
+)
+
+chart_col_1, chart_col_2 = st.columns(2)
+
+with chart_col_1:
+    st.markdown(
+        """
+        <div class="panel">
+            <div class="panel-title">Threat Distribution</div>
+            <div class="panel-subtitle">
+                Classified threat types across all logged requests
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+threat_chart = px.bar(
+        threat_counts,
+        x="Threat",
+        y="Count",
+        color="Count",
+        color_continuous_scale=["#5c3217", "#e3a116", "#fa6b70"],
+    )
+
+threat_chart.update_layout(
+        height=330,
+        margin=dict(l=10, r=10, t=10, b=10),
+        paper_bgcolor="#24170f",
+        plot_bgcolor="#24170f",
+        font_color="#ead7bd",
+        coloraxis_showscale=False,
+    )
+
+st.plotly_chart(threat_chart, width="stretch", config={"displayModeBar": False})
+
+with chart_col_2:
+    st.markdown(
+        """
+        <div class="panel">
+            <div class="panel-title">Action Distribution</div>
+            <div class="panel-subtitle">
+                Enforcement actions applied to incoming requests
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+action_chart = px.pie(
+        action_counts,
+        names="Action",
+        values="Count",
+        hole=0.48,
+        color="Action",
+        color_discrete_map={
+            "BLOCK": "#fa6b70",
+            "ALERT": "#f1a400",
+            "ALLOW": "#45d979",
+            "UNKNOWN": "#8e6b4a",
+        },
+    )
+
+action_chart.update_layout(
+        height=330,
+        margin=dict(l=10, r=10, t=10, b=10),
+        paper_bgcolor="#24170f",
+        plot_bgcolor="#24170f",
+        font_color="#ead7bd",
+        legend=dict(font_size=11),
+    )
+
+st.plotly_chart(action_chart, width="stretch",
+
