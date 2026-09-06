@@ -9,7 +9,7 @@ import streamlit as st
 
 # ── Config ────────────────────────────────────────────────────────────────────
 DB_PATH = Path(__file__).resolve().parent / "apishield.db"
-
+API_BASE_URL = "https://apishield-api.onrender.com"
 st.set_page_config(
     page_title="APIShield – Security Overview",
     page_icon="🛡️",
