@@ -355,50 +355,6 @@ The following improvements are recommended before production use:
 | Security Monitoring | Displays request and threat activity |
 | Research | Supports experimentation with detection rules |
 
-## GitHub Commands
-
-To update the project after making changes:
-
-```powershell
-git add .
-git commit -m "Update APIShield project"
-git push
-```
-
-To check the current repository status:
-
-```powershell
-git status
-```
-
-To check the configured remote:
-
-```powershell
-git remote -v
-```
-
-## Contribution
-
-Contributions are welcome.
-
-| Step | Action |
-|---|---|
-| 1 | Fork the repository |
-| 2 | Create a new feature branch |
-| 3 | Make your changes |
-| 4 | Test the changes locally |
-| 5 | Commit the changes |
-| 6 | Push the branch |
-| 7 | Create a pull request |
-
-Example:
-
-```bash
-git checkout -b feature/new-security-rule
-git add .
-git commit -m "Add new security detection rule"
-git push origin feature/new-security-rule
-```
 
 ## License
 
